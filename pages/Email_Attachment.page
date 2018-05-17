@@ -1,0 +1,10 @@
+<apex:page standardController="Case" extensions="Email_Attachment">
+    
+    <apex:form id="form">
+    
+        <apex:commandButton value="YES" action="{!saveRecord}" />       
+		<apex:commandButton value="NO" action="{!refreshRecord}"/>
+        
+    </apex:form>
+    
+</apex:page>
