@@ -12,7 +12,8 @@
         "ignoreWarnings": true
     },
     "username": "shaswat.kar@girikon.com",
-    "password": "shaswat275",
+    "password": "shaswat275qdz01jSpSEW4vWV3Z9l84XXO",
     "url": "https://login.salesforce.com",
-    "autoCompile": true
+    "autoCompile": false,
+    "src": "src"
 }
