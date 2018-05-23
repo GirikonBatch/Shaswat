@@ -2,8 +2,8 @@
 <Layout xmlns="http://soap.sforce.com/2006/04/metadata">
     <customButtons>CFACE__Archive</customButtons>
     <customButtons>CFACE__Retrieve</customButtons>
-    <customButtons>ArchiveTesting</customButtons>
-    <customButtons>RestoreTesting</customButtons>
+    <customButtons>Archive_Email</customButtons>
+    <customButtons>Restore_Email</customButtons>
     <emailDefault>false</emailDefault>
     <excludeButtons>Submit</excludeButtons>
     <feedLayout>

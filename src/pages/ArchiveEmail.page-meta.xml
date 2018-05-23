@@ -3,7 +3,7 @@
     <apiVersion>42.0</apiVersion>
     <availableInTouch>false</availableInTouch>
     <confirmationTokenRequired>false</confirmationTokenRequired>
-    <label>Email_Attachment</label>
+    <label>ArchiveEmail</label>
     <packageVersions>
         <majorNumber>1</majorNumber>
         <minorNumber>6</minorNumber>
