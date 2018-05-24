@@ -1,0 +1,17 @@
+<apex:page standardController="Case" extensions="RestoreEmail">
+    
+    <apex:form id="form">
+    
+    	<h3> Are you sure...!!! You would like to Restore : </h3>
+        
+        &nbsp;&nbsp;
+        
+        <apex:commandButton value="YES" action="{!OnRestore}"/>
+        
+        &nbsp;&nbsp;
+        
+        <apex:commandButton value="NO" action="{!NoRestore}"/>
+    
+    </apex:form>
+
+</apex:page>

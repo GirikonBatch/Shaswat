@@ -27,37 +27,37 @@ public class ArchiveEmail
         return pgref;
     }
     
-// Methods for Archive Function Call 
+// Methods for OnArchive Function Call 
     
     public PageReference OnArchive()     
     {
-        for(emailMessage  e : [SELECT BccAddress,CcAddress,CreatedById,CreatedDate,FromAddress,FromName,HasAttachment,Headers,HtmlBody,Id,Incoming,
-                              IsClientManaged,IsDeleted,IsExternallyVisible,LastModifiedById,LastModifiedDate,MessageDate,MessageIdentifier,ParentId,
-                              RelatedToId,ReplyToEmailMessageId,Status,Subject,SystemModstamp,TextBody,ThreadIdentifier,ToAddress,ValidatedFromAddress 
-                              FROM EmailMessage where ParentId =: csid])
+        for(emailMessage  email : [SELECT Counter__c,BccAddress,CcAddress,CreatedById,CreatedDate,FromAddress,FromName,HasAttachment,Headers,
+                                   HtmlBody,Id,Incoming,IsClientManaged,IsDeleted,IsExternallyVisible,LastModifiedById,LastModifiedDate,
+                              	   MessageDate,MessageIdentifier,ParentId,RelatedToId,ReplyToEmailMessageId,Status,Subject,SystemModstamp,
+                              	   TextBody,ThreadIdentifier,ToAddress,ValidatedFromAddress FROM EmailMessage where ParentId =: csid])
         {
-            system.debug('##################################'+e);
+            system.debug('##################################'+email);
             
-           // em.add(e);
+           // em.add(email);
 
 // Converting Every Email into a New Attachment in PDF Format  
             
-            String pdfContent = 'Name:' + e.FromAddress +'<br>'+'<br>'+ 'Subject:' + e.Subject +'<br>'+'<br>'+ 'Body:' + e.TextBody ;
+            String pdfContent = 'Name:' + email.FromAddress +'<br>'+'<br>'+ 'Subject:' + email.Subject +'<br>'+'<br>'+ 'Body:' + email.TextBody;
             
             Attachment attachmentPDF = new Attachment();     
             attachmentPDF.parentId = csid;            
-            attachmentPDF.name= e.id+'.pdf';
+            attachmentPDF.name= 'email'+email.Counter__c+'.pdf';
             attachmentPDF.body = blob.toPDF(pdfContent);
             
             emailpdf.add(attachmentPDF);
         
 // By Changing the Parent ID, Converting Email Attachments of each Email to Case Attachments 
 
-            for(Attachment a : [select Id, Name, Body, ParentId from Attachment where ParentId =: e.id])
+            for(Attachment a : [select Id, Name, Body, ParentId from Attachment where ParentId =: email.id])
             {
                 Attachment att = new Attachment();
                 att.parentId = csid;
-                att.Name = a.name;
+                att.Name = email.Counter__c+ '_' + a.Name;
                 att.Body = a.body;
                 at.add(att);
             }
@@ -66,20 +66,19 @@ public class ArchiveEmail
     
             Attachment attach = new Attachment();
             attach.parentId = csid;
-            attach.Name = 'Parser.txt';
-            attach.Body = blob.valueOf('#%#'+e.BccAddress+
-                                       '#%#'+e.CcAddress+
-                                       '#%#'+e.FromAddress+
-                                       '#%#'+e.FromName+
-                                       '#%#'+e.Headers+
-                                       '#%#'+e.HtmlBody+
-                                       '#%#'+e.Id+
-                                       '#%#'+e.RelatedToId+
-                                       '#%#'+e.Subject+
-                                       '#%#'+e.TextBody+
-                                       '#%#'+e.ToAddress+
-                                       '#%#'+e.Incoming+
-                                       '#%#'+e.Status+
+            attach.Name = 'Parser'+email.Counter__c+'.txt';
+            attach.Body = blob.valueOf('#%#'+email.BccAddress+
+                                       '#%#'+email.CcAddress+
+                                       '#%#'+email.FromAddress+
+                                       '#%#'+email.FromName+
+                                       '#%#'+email.Headers+
+                                       '#%#'+email.HtmlBody+
+                                       '#%#'+email.Id+
+                                       '#%#'+email.RelatedToId+
+                                       '#%#'+email.Status+
+                                       '#%#'+email.Subject+
+                                       '#%#'+email.TextBody+
+                                       '#%#'+email.ToAddress+
                                        '#%#'+aid);
             lparser.add(attach);
         }
@@ -89,7 +88,7 @@ public class ArchiveEmail
         Insert lparser;
         
        // Delete at;
-       // database.emptyRecycleBin(em);
+       // database.emptyRecycleBin(email);
        
         System.debug('++++++++++++++++++++++++++++++++++debug');
         
@@ -97,9 +96,16 @@ public class ArchiveEmail
         return pgref;
     }
     
-    public PageReference Restore()
+    public PageReference NoRestore()
     {
         PageReference pgref = new PageReference('/' + csid);
+        return pgref;
+    }
+    
+    public PageReference OnRestore()
+    {
+        csid = ApexPages.currentPage().getParameters().get('id');
+        PageReference pgref = new PageReference ('/' + csid);
         return pgref;
     }
 }
