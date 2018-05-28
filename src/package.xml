@@ -1,25 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Package xmlns="http://soap.sforce.com/2006/04/metadata">
 
-    <types>
-        <members>ArchiveEmail</members>
-        <members>RestoreEmail</members>
+<types>
+    <members>ArchiveEmail</members>
+    <members>RestoreEmail</members>
+    <name>ApexClass</name>
+</types>
+<types>
+    <members>ArchiveEmail</members>
+    <members>RestoreEmail</members>
+    <name>ApexPage</name>
+</types>
+<types>
+    <members>Case-Case (Support) Layout</members>
+    <name>Layout</name>
+</types>
 
-        <name>ApexzClass</name>
-    </types>
-
-    <types>
-        <members>ArchiveEmail</members>
-        <members>RestoreEmail</members>
-
-        <name>ApexPage</name>
-    <types>
-
-    <types>
-        <members>case- Case (Support) Layout</members>
-
-        <name>Layout</name>
-    </types>
-    
-    <version>42.0</version>
+<version>42.0</version>
 </Package>
