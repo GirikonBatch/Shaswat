@@ -92,7 +92,14 @@ public class ArchiveEmail
         //database.emptyRecycleBin(Email);
        
         System.debug('++++++++++++++++++++++++++++++++++debug');
-        
+
+        List<task> ts = [SELECT Id, TaskSubtype,WhatId,WhoId FROM Task WHERE TaskSubtype = 'Email' AND WhatId =: csid];
+
+        delete ts;
+
+        if(ts.size()>0)
+        database.emptyRecycleBin(ts);
+
         PageReference pgref = new PageReference('/' + csid);
         return pgref;
     }

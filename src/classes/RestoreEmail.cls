@@ -127,7 +127,7 @@ public class RestoreEmail
         List<Attachment> ParserfilesDelete = new List<Attachment>();
         List<Attachment> EmailfilesDelete = new List<Attachment>();
         
-        ParserfilesDelete = [Select Id, ParentId, Name, Body, ContentType From Attachment where name like 'Parser%.txt' and ParentId =: csid];
-        EmailfilesDelete = [Select Id, ParentId, Name, Body, ContentType From Attachment where name like 'Email%.pdf' and ParentId =: csid];      
+        ParserfilesDelete = [SELECT Id, ParentId, Name, Body, ContentType FROM Attachment WHERE name LIKE 'Parser%.txt' and ParentId =: csid];
+        EmailfilesDelete = [SELECT Id, ParentId, Name, Body, ContentType FROM Attachment WHERE name LIKE 'Email%.pdf' and ParentId =: csid];      
     }
 }

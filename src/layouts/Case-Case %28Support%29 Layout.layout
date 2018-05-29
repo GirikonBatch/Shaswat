@@ -90,6 +90,10 @@
                 <behavior>Edit</behavior>
                 <field>test__c</field>
             </layoutItems>
+            <layoutItems>
+                <behavior>Edit</behavior>
+                <field>IsArchived__c</field>
+            </layoutItems>
         </layoutColumns>
         <layoutColumns>
             <layoutItems>
