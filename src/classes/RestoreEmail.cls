@@ -1,133 +1,157 @@
 public class RestoreEmail
 {
-	public String csid;
+    public String csid;                                              // csid Stores the Case ID that is to be Archived to be Processed
     
-	public List<emailMessage> emailRestore = new List<emailMessage>();          //Email list to Restore
-    
-    public list<String> lstring = new list<String>();
-
-	public RestoreEmail(ApexPages.StandardController controller)
-	{
-		csid = ApexPages.currentPage().getParameters().get('id');
-	}
-	
-	public PageReference NoRestore()
-	{
-        csid = ApexPages.currentPage().getParameters().get('id');
-        PageReference pgref = new PageReference('/' + csid);
-        return pgref;
-	}
-
-	public Pagereference OnRestore()
+    public RestoreEmail(ApexPages.StandardController controller)
     {
-		List<String> atids = new List<String>();
-		Map<integer,List<id>> EmailAttachementMap = new Map<integer,List<id>>();
+        csid = ApexPages.currentPage().getParameters().get('id');
+    }
 
-        integer i = 0;
-		
-        for(Attachment at : [SELECT Id, ParentId, Name, Body FROM Attachment WHERE name LIKE 'Parser%' AND ParentID =: csid])
- 		{
-		    //Reading Parser File and creating an Email corresponding to every Parser and fetching Attachment ids in Parser
-    		String bodyContent = at.body.toString();           //bodyContent is body of Parser File
-    		String[] lstring = bodycontent.split('#%#');
+// Function Call on click of NO Button
+    public PageReference NoRestore() 
+    {
+        PageReference pgref = new PageReference('/' + csid);
+        //system.debug('########################'+ csid);
+        return pgref;
+    }
 
-    		EmailMessage eml = new EmailMessage();
-            
-    		eml.BccAddress = lstring[1];
-    		eml.CcAddress = lstring[2];
-    		eml.FromAddress = lstring[3];
-    		eml.FromName = lstring[4];
-    		eml.Headers = lstring[5];
-            eml.HtmlBody = lstring[6];
-    		eml.ParentId = lstring[7];
-            eml.RelatedToId = lstring[8];
-            eml.Status = lstring[9];
-            eml.Subject = lstring[10];
-            eml.TextBody = lstring[11];
-   			eml.ToAddress = lstring[12];
-    		    		
-            emailrestore.add(eml);
-    
-    		if(lstring.size()==13)
-    		{
-    			atids = lstring[12].split(';');       // atids contains  attachment ids stored in parser file
-    		}
-    
-            // Storing list of ids
-    		if(atids.size()>0)
-    		{
-    			List<id> AttachmentsID = new List<id>(); // This will contain attachment ids to be inserted       
+    public PageReference OnRestore()
+    {
         
-                For(integer j=0;j<atids.size();j++)
-        		{    
-                    Attachment b = new Attachment();
-                    
-             		b = [SELECT Body,BodyLength,ContentType,CreatedById,CreatedDate,Description,Id,IsDeleted,IsPrivate,LastModifiedById,
-                         LastModifiedDate,Name,OwnerId,ParentId,SystemModstamp FROM Attachment WHERE id =: atids[j]];
+// Function Call on click of YES Button
+        List<EmailMessage> emailRestore = new List<EmailMEssage>();         // Email List to Restore
+        List<String> atids = new List<String>();
+        
+        Map<integer, List<id>> IndexAttachmentMap = new Map<integer, List<id>>();
+        Map<id, List<id>> EmailIDAttachmentMap = new Map<id, List<id>>();
+
+        List<Attachment> ATTFILES = new List<Attachment>();
+        
+        integer i = 0;
+        
+        ATTFILES = [SELECT Id, ParentId, Name, Body FROM Attachment WHERE name LIKE '%PARSER.txt' AND ParentID =: csid];   // Use ParentID in:ListCaseID in bulk
+
+        Map <id, Attachment> AllAttach = new Map<id, Attachment>([SELECT Id, ParentId, Name, Body, ContentType, Description, IsPrivate, OwnerId FROM Attachment WHERE ParentID =: csid]);
+
+        for(Attachment at : ATTFILES)
+        {
+            // Reading Parser File and Creating an Email corresponding to every Parser and fetching Attachment ids in Parser
             
-                    AttachmentsID.add(b.id);
-        		} 
+            String bodyContent = at.body.toString();          // bodyContent is Body of Parser file
+            String[] lstring = bodyContent.split('#%#');
+            
+            //system.debug('############################'+ lstring);
+            
+            EmailMessage em = new EmailMessage();
+            
+            em.BccAddress = lstring[1];
+            em.CcAddress = lstring[2];
+            em.FromAddress = lstring[3];
+            em.FromName = lstring[4];
+            em.Headers = lstring[5];
+            em.ParentId = lstring[6];            // CaseID can also be used but this will help in bulk so it is used
+            em.Status = lstring[7];
+            em.Subject = lstring[8];
+            em.TextBody = lstring[9];
+            em.ToAddress = lstring[10];
+            
+            emailrestore.add(em);               // Adding email object to list for insertion outside for loop
+    
+            if(lstring.size()==12)              // Check if Attachment Ids are there or not 
+            {
+                atids.clear();
+                atids = lstring[11].split(';'); //atids contains  attachment ids stored in parser file
                 
-                EmailAttachementMap.put(i++,AttachmentsID);
-    		}
-		}
+                //system.debug('##############atids############ inside if condition'+ atids);
+    
+                // Storing list of ids
+                if(atids.size()>0)
+                {
+                    //system.debug('##########ATTACHMENTIDS##########'+ atids);
+    
+                    List<id> AttachmentsID = new List<id>();           // temp list this will contain Attachment Ids to be inserted       
+                    
+                    For(integer j=0;j<atids.size();j++)
+                    {    
+                        AttachmentsID.add(atids[j]);
+                        
+                        //System.debug('######################### '+ AttachmentsID );
+                    }
+                     
+                    IndexAttachmentMap.put(i++,AttachmentsID);         // Saving Attachment Ids with Indexes in Map
+        
+                    //System.debug('#############'+ AttachmentsID +'   '+ i);
+                }
+            }
+            
+            if(lstring.size()<12)
+            {
+                i++;
+            }
+        }
 
-		insert emailrestore;
-
-        Map<id,List<id>> EmailAttachementMap1 = new Map<id,List<id>>();
-                
+        Insert emailrestore;                            // Email Objects Inserted    
+        
         for(integer j=0;j<emailrestore.size();j++)
         {
-        	EmailAttachementMap1.put(emailrestore[j].id, EmailAttachementMap.get(j)) ;  
-        	EmailAttachementMap.remove(j);
-        }
-        
-        List<Attachment> atmList = new List<Attachment>();
-        List<Attachment> atmLis_del = new List<Attachment>();
-        
-        for(id p_id : EmailAttachementMap1.keySet() )   			// Traversing list of inserted email ids in map
-        {     
-              
-        	if(EmailAttachementMap1.get(p_id) != NULL)
+            if(IndexAttachmentMap.get(j)!=NULL)
             {
-                for(attachment attm : [SELECT Body,BodyLength,ContentType,CreatedById,CreatedDate,Description,Id,
-                                       IsDeleted,IsPrivate,LastModifiedById,LastModifiedDate,Name,OwnerId,ParentId,
-                                       SystemModstamp FROM attachment WHERE ID in : EmailAttachementMap1.get(p_id)])
-            	{
-                    
-                    Attachment atch = new Attachment();
-                    
-                    atch.Body = attm.Body;
-                    atch.ContentType = attm.ContentType;
-                    atch.Description = attm.Description;
-                    atch.IsPrivate =  attm.IsPrivate;
-                    atch.Name  = attm.Name.substringAfterLast('_') ;
-                    atch.OwnerId = attm.OwnerId;
-                    atch.ParentId = p_id;
-                    
-                    atmList.add(atch);
-                    
-                    atmLis_del.add(attm);                    
-             	}
-        	}  
+                EmailIDAttachmentMap.put(emailrestore[j].id, IndexAttachmentMap.get(j)) ;   // Saving Email Id and corresponding Attachments Id using map1 
+                 
+                //IndexAttachmentMap.remove(j);
+            }
         }
-       
-		Insert atmList;
-     	Delete atmLis_del;
-     	database.emptyRecycleBin(atmLis_del);
-   
-        del();
-
-        PageReference pgref = new PageReference('/' + csid);
+               
+        //System.debug('++++++++++++++++++++++++'+EmailIDAttachmentMap);
+    
+        List<Attachment> atmList = new List<Attachment>();
+        List<Attachment> atmLis = new List<Attachment>();
+        
+        for(id eid : EmailIDAttachmentMap.keySet() )                      // Traversing list of inserted Email Ids in map2
+        {      
+            List<id> atid;
+            
+            if(EmailIDAttachmentMap.get(eid) != NULL)
+            {
+                atid = new List<id>(EmailIDAttachmentMap.get(eid));       // Saving a set of Ids for specific Email Id
+            }
+            
+            for(Integer j=0;j<atid.size();j++)
+            {
+                Attachment At = AllAttach.get(atid[j]);
+                Attachment atch = new attachment();
+                
+                atch.Body = At.Body;
+                atch.ContentType = At.ContentType;
+                atch.Description = At.Description;
+                atch.IsPrivate =  At.IsPrivate;
+                atch.Name  = At.Name.substringAfterLast('_') ;
+                atch.OwnerId = At.OwnerId;
+                atch.ParentId = eid;
+                
+                atmList.add(atch);  
+                atmLis.add(at); 
+            }                   
+        }
+     
+        Insert atmList; //insert
+           
+        //Delete atmLis;
+        del();     
+    
+        PageReference pgref = new PageReference('/'+csid);
         return pgref;
     }
     
-	void del()
+    void del()
     {
         List<Attachment> ParserfilesDelete = new List<Attachment>();
         List<Attachment> EmailfilesDelete = new List<Attachment>();
         
-        ParserfilesDelete = [SELECT Id, ParentId, Name, Body, ContentType FROM Attachment WHERE name LIKE 'Parser%.txt' and ParentId =: csid];
-        EmailfilesDelete = [SELECT Id, ParentId, Name, Body, ContentType FROM Attachment WHERE name LIKE 'Email%.pdf' and ParentId =: csid];      
+        ParserfilesDelete = [SELECT Id,ParentId,Name,body,ContentType FROM Attachment WHERE name LIKE '%PARSER.txt' AND ParentId =: csid];
+        EmailfilesDelete = [SELECT Id,ParentId,Name,body,ContentType FROM Attachment WHERE name LIKE 'EMAIL%.pdf' AND ParentId =: csid];
+        
+        //Delete ParserfilesDelete;
+        //Delete EmailfilesDelete;
     }
 }

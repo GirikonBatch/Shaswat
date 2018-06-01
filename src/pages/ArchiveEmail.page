@@ -6,11 +6,11 @@
         
         &nbsp;&nbsp;
         
-        <apex:commandButton value="YES" action="{!OnArchive}"   />
+        <apex:commandButton value="YES" action="{!OnArchive}" />
         
         &nbsp;&nbsp;
         
-        <apex:commandButton value="NO" action="{!NoArchive}"/>
+        <apex:commandButton value="NO" action="{!NoArchive}" />
         
     </apex:form>
     

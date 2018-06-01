@@ -1,119 +1,130 @@
-public class ArchiveEmail 
+public class ArchiveEmail
 {
-    List<emailMessage> em = new List<emailMessage>();           // Email lists is to be Archived
-    List<Attachment> at = new List<Attachment>();               // Attachments is to be Archived
+    public string csid{get;set;}                                          // csid Stores the Case ID that is to be Archived to be Processed
     
-    public id csid{get;set;}                                    // Case ID is to be Processed
-    public String parameterValue{get;set;}
-
-    list<Attachment> emailpdf = new List<Attachment>();        // List to contain PDF for Archived Email
-    list<Attachment> lparser = new List<Attachment>();         // List that contain Parser
-
-    public String aid = '';                                    // String to Store the Attachment Id for each Email
-    public list<String> lstring = new list<String>();        
+    List<EmailMessage> delemail = new List<EmailMessage>();               // List of Emails to be Archived
+    
+    List<Attachment> lattach = new List<Attachment>();                    // List to Add Attachments
+    List<Attachment> lemailpdf = new List<Attachment>();                  // List to contain PDF for Archived Emails
+    List<Attachment> lparser = new List<attachment>();                    // List to contain Parser
+    
+    public String aid = '';                                               // String to store Attachment ID for every Email
+    
+    public map <id, EmailMessage> emailMap;                               // Map that has a List of Email as the Value (used to Store the Actual Email and the Type of EmailMessage)
+    public map <id, Attachment> attmMap = new map<id, Attachment>();      // Map that has a List of Attachment as the Value (used to store the Actual Attachment and the Type of Attachment)
+    
 
     public ArchiveEmail(ApexPages.StandardController controller)
-    {
-        system.debug('======================================hello');
-        csid = ApexPages.currentPage().getParameters().get('id');
+    {  
+        csid = ApexPages.currentPage().getParameters().get('id');   
     }
-    
-// NoArchive Function Call
-    
-    public PageReference NoArchive()     
-    {
-        csid = ApexPages.currentPage().getParameters().get('id');
+
+// Function Call on click of NO Button
+
+    public PageReference NoArchive()
+    {    
         PageReference pgref = new PageReference('/' + csid);
+        //system.debug('#####################' + csid);
         return pgref;
     }
-    
-// Methods for OnArchive Function Call 
-    
-    public PageReference OnArchive()     
+
+// Function Call on click of YES Button
+
+    public PageReference OnArchive()
     {
-        for(emailMessage  Email : [SELECT Counter__c,BccAddress,CcAddress,CreatedById,CreatedDate,FromAddress,FromName,HasAttachment,Headers,
-                                   HtmlBody,Id,Incoming,IsClientManaged,IsDeleted,IsExternallyVisible,LastModifiedById,LastModifiedDate,
-                              	   MessageDate,MessageIdentifier,ParentId,RelatedToId,ReplyToEmailMessageId,Status,Subject,SystemModstamp,
-                              	   TextBody,ThreadIdentifier,ToAddress,ValidatedFromAddress FROM emailMessage where ParentId =: csid])
-        {
-            system.debug('##################################'+Email);
-            
-           // em.add(Email);
-
-// Converting Every Email into a New Attachment in PDF Format  
-            
-            String pdfContent = 'Name:' + Email.FromAddress +'<br>'+'<br>'+ 'Subject:' + Email.Subject +'<br>'+'<br>'+ 'Body:' + Email.TextBody;
-            
-            Attachment attachmentPDF = new Attachment();     
-            attachmentPDF.parentId = csid;            
-            attachmentPDF.name= 'Email'+Email.Counter__c+'.pdf';
-            attachmentPDF.body = blob.toPDF(pdfContent);
-            
-            emailpdf.add(attachmentPDF);
-        
-// By Changing the Parent ID, Converting Email Attachments of each Email to Case Attachments 
-
-            for(Attachment a : [select Id, Name, Body, ParentId from Attachment where ParentId =: Email.id])
-            {   
-                Attachment att = new Attachment();
-                att.parentId = csid;
-                att.Name = Email.Counter__c+ '_' + a.Name;
-                att.Body = a.body;
-                at.add(att);
-            }    
-// Creating an Email into Parser File for Retriving Email
-    
-            Attachment attach = new Attachment();
-            attach.parentId = csid;
-            attach.Name = 'Parser'+Email.Counter__c+'.txt';
-            attach.Body = blob.valueOf('#%#'+Email.BccAddress+
-                                       '#%#'+Email.CcAddress+
-                                       '#%#'+Email.FromAddress+
-                                       '#%#'+Email.FromName+
-                                       '#%#'+Email.Headers+
-                                       '#%#'+Email.HtmlBody+
-                                       '#%#'+Email.Id+
-                                       '#%#'+Email.RelatedToId+
-                                       '#%#'+Email.Status+
-                                       '#%#'+Email.Subject+
-                                       '#%#'+Email.TextBody+
-                                       '#%#'+Email.ToAddress+
-                                       '#%#'+aid);
-            lparser.add(attach);
-        }
+        emailMap = new map<id, EmailMessage>([SELECT ActivityId,BccAddress,CcAddress,CreatedById,CreatedDate,FromAddress,FromName,
+                                              HasAttachment,Headers,HtmlBody,Id,Incoming,IsClientManaged,IsDeleted,IsExternallyVisible,
+                                              LastModifiedById,LastModifiedDate,MessageDate,MessageIdentifier,ParentId,RelatedToId,
+                                              ReplyToEmailMessageId,Status,Subject,TextBody,ToAddress,ValidatedFromAddress,Counter__c 
+                                              FROM EmailMessage WHERE ParentId =: csid]);
    
-        Insert at;
-        Insert emailpdf;        
-        Insert lparser;
+        //system.debug('#####################' + emailMap);
         
-        //Insert emailpdf;        
-        //Delete at;
-        //Delete emailpdf;        
-        //database.emptyRecycleBin(Email);
-       
-        System.debug('++++++++++++++++++++++++++++++++++debug');
+        attmMap = new map<id, Attachment>([SELECT Body,BodyLength,ContentType,CreatedById,CreatedDate,Description,Id,IsDeleted,IsPrivate,
+                                           LastModifiedById,LastModifiedDate,Name,OwnerId,ParentId,SystemModstamp FROM Attachment WHERE 
+                                           ParentId in : emailMap.keySet()]);
+        
+        //system.debug('#####################' + attmMap);
+        
+        for(Attachment at : attmMap.values())
+        {
+            Attachment atch = new Attachment();
+                    
+            EmailMessage em = emailMap.get(at.ParentId);                       // Relevant from Bulk perspective 
+            
+// Otherwise simply use csid        
+            atch.Body = at.Body;
+            atch.ContentType = at.ContentType;
+            atch.Description = at.Description;
+            atch.IsPrivate =  at.IsPrivate;
+            atch.Name  = 'ATTACHMENT' + '_' + em.Counter__c + '_' + at.Name;
+            atch.ParentId = em.ParentId;                                      
+            
+            lattach.add(atch);
+        }
 
-        List<task> ts = [SELECT Id, TaskSubtype,WhatId,WhoId FROM Task WHERE TaskSubtype = 'Email' AND WhatId =: csid];
+        if(lattach.size()>0)
+        Insert lattach; 
 
-        delete ts;
+        for(EmailMessage em : emailMap.values())
+        {             
+            aid = '';  
+            
+            for(Attachment a : lattach)
+            {
+                string str = a.Name;
+                
+                if(str.startsWith('ATTACHMENT' + '_' + em.Counter__c))
+                {
+                    aid = aid + a.Id + ';';
+                } 
+            }
+            
+// Creating PDF file to Email   
+            Attachment at = new Attachment();
 
+            at.ParentId =  em.ParentId;
+            at.Name = 'EMAIL' + '_' + em.Counter__c + '_.pdf';
+            at.Body = blob.toPDF('Name:' + em.FromName + '<br/>' + '<br/>' + 'From:' + em.FromAddress + '<br/>' + '<br/>' + 'CC Name:' + em.CcAddress + '<br/>' + '<br/>' +
+                                 'BCC Name:' + em.BccAddress + '<br/>' + '<br/>' + 'Subject:' + em.Subject + '<br/>' + '<br/>' + 'Body:' + em.TextBody + '<br/>'+ '<br/>');
+                                    
+            lemailpdf.add(at);
+
+// Creating Parser file for every Email
+            Attachment parse = new Attachment();
+            
+            parse.ParentId = em.ParentId;
+            parse.Name = 'PARSER' + '_' + em.Counter__c + '_.txt';
+            parse.Body =  blob.valueOf('#%#'+em.BccAddress+          // 1st 
+                                       '#%#'+em.CcAddress+           // 2nd
+                                       '#%#'+em.FromAddress+
+                                       '#%#'+em.FromName+
+                                       '#%#'+em.Headers+
+                                       '#%#'+em.ParentId+            // 6th i.e; Case Id
+                                       '#%#'+em.Status+
+                                       '#%#'+em.Subject+
+                                       '#%#'+em.TextBody+            // Body
+                                       '#%#'+em.ToAddress+
+                                       '#%#'+aid);
+                                       
+            lparser.add(parse);                          // Adding Parser Files to List for Insertion          
+            delemail.add(em);                            // Adding Email Objects to List for Deletion
+        }
+            
+        Insert lemailpdf;
+        Insert lparser;
+
+        //Delete delemail;
+    
+        list<task> ts = [SELECT Id, TaskSubtype, WhatId, WhoId FROM Task WHERE TaskSubtype = 'EMAIL' AND WhatId =: csid];
+        
+        Delete ts;
+        
         if(ts.size()>0)
         database.emptyRecycleBin(ts);
 
         PageReference pgref = new PageReference('/' + csid);
-        return pgref;
-    }
-    
-    public PageReference NoRestore()
-    {
-        PageReference pgref = new PageReference('/' + csid);
-        return pgref;
-    }
-    
-    public PageReference OnRestore()
-    {
-        csid = ApexPages.currentPage().getParameters().get('id');
-        PageReference pgref = new PageReference ('/' + csid);
-        return pgref;
+        //system.debug('#####################' + csid);
+        return pgref; 
     }
 }
